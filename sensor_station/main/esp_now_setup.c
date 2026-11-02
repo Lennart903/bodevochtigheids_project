@@ -1,11 +1,14 @@
+#include "esp_now_setup.h"
 #include <stdio.h>
+#include "esp_now.h"
 #include <string.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_netif.h"
-#include "esp_now_setup.h"
-#include "esp_now.h"
+
+
 
 #define ESP_NOW_CHANNEL 1
 #define HUB_MAC_ADDR (uint8_t[]){0xB8, 0x1F, 0x3F, 0x0F, 0x81, 0xF0}
@@ -40,7 +43,7 @@ static void wifi_init()
 
 
 
-uint32_t esp_now_setup(void)
+void esp_now_setup(void)
 {
     wifi_init();
 
