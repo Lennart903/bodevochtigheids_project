@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Garden Moisture Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body style="font-family: sans-serif; background: #121212; color: #fff; padding: 20px;">
+    <h2>🌱 Garden Soil Humidity</h2>
+    <div style="width: 80%; max-width: 800px; margin: auto;">
+        <canvas id="moistureChart"></canvas>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://xyzcompany.supabase.co/rest/v1/sensor_readings?select=*&order=created_at.desc&limit=20";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+
+        const ctx = document.getElementById('moistureChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: 'Soil Moisture (%)', data: [], borderColor: '#4CAF50', fill: false }] }
+        });
+
+        async function fetchData() {
+            const res = await fetch(SUPABASE_URL, {
+                headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+            });
+            const data = await res.json();
+            data.reverse();
+
+            chart.data.labels = data.map(d => new Date(d.created_at).toLocaleTimeString());
+            chart.data.datasets[0].data = data.map(d => d.humidity);
+            chart.update();
+        }
+
+        fetchData();
+        setInterval(fetchData, 10000); // Refresh graph every 10 seconds
+    </script>
+</body>
+</html>
