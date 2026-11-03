@@ -96,17 +96,19 @@ static void http_upload_task(void *pvParameters)
 static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void* event_data)
 {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
-        printf("Wi-Fi started! Attempting to connect...\n");
+        ESP_LOGI(TAG, "Wi-Fi started! Attempting to connect...");
         esp_wifi_connect(); 
     }
-    // ADD THIS BLOCK: If it fails or drops, try again
     else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         wifi_event_sta_disconnected_t* disconnected = (wifi_event_sta_disconnected_t*) event_data;
-        printf("Wi-Fi disconnected! Reason code: %d\n", disconnected->reason);
+        ESP_LOGW(TAG, "Wi-Fi disconnected! Reason: %d. Retrying...", disconnected->reason);
+        xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT);
         esp_wifi_connect();
     }
     else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
-        printf("We got an IP address! We are online.\n");
+        ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+        ESP_LOGI(TAG, "Connected! Got IP: " IPSTR, IP2STR(&event->ip_info.ip));
+        xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
     }
 }
 
