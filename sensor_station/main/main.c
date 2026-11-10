@@ -7,8 +7,6 @@
 
 #define REPLY_WAITING_TIME 500
 
-
-
 void app_main(void) 
 {
     adc_oneshot_unit_handle_t adc_handle;
@@ -34,13 +32,19 @@ void app_main(void)
         waiting_time -= 10;
     }
 
-    if (hub_reply_received && led_state == 1) 
+    if (hub_reply_received) 
     {
-        led_init();
-        blink_led(); 
+        printf("--- SUCCESS: Hub replied! ---\n");
+        if (led_state == 1) {
+            led_init();
+            blink_led(); 
+        }
+    } 
+    else 
+    {
+        printf("--- TIMEOUT: Hub never sent a reply back. ---\n");
     }
 
 
-    enter_deep_sleep();
+    //enter_deep_sleep();
 }
-

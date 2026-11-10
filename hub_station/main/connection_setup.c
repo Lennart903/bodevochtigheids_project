@@ -77,7 +77,7 @@ static void http_upload_task(void *pvParameters)
             // Supabase API Headers
             esp_http_client_set_header(client, "Content-Type", "application/json");
             esp_http_client_set_header(client, "apikey", SUPABASE_KEY);
-            esp_http_client_set_header(client, "Authorization", "Bearer " SUPABASE_KEY);
+            //esp_http_client_set_header(client, "Authorization", "Bearer " SUPABASE_KEY);
             esp_http_client_set_post_field(client, post_data, strlen(post_data));
 
             esp_err_t err = esp_http_client_perform(client);
@@ -116,9 +116,20 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
 
 static void data_recv_cb(const esp_now_recv_info_t *esp_now_info, const uint8_t *data, int data_len)
 {
+    ESP_LOGI(TAG, "🚨 HUB SOFTWARE CALLBACK FIRED! Data len: %d 🚨", data_len);
+
     if(data_len >= sizeof(uint16_t))
     {
-        ESP_ERROR_CHECK(esp_now_send(esp_now_info->src_addr, &led_state, 1));
+        if (!esp_now_is_peer_exist(esp_now_info->src_addr)) {
+            esp_now_peer_info_t peer = {0};
+            memcpy(peer.peer_addr, esp_now_info->src_addr, 6);
+            peer.channel = 11; 
+            peer.ifidx = WIFI_IF_AP;
+            peer.encrypt = false;
+            esp_now_add_peer(&peer);
+        }
+
+        esp_now_send(esp_now_info->src_addr, &led_state, 1);
 
         sensor_packet_t packet;
         memcpy(packet.mac_addr, esp_now_info->src_addr, 6);
@@ -129,7 +140,7 @@ static void data_recv_cb(const esp_now_recv_info_t *esp_now_info, const uint8_t 
 
 static void data_send_cb(const esp_now_send_info_t *tx_info, esp_now_send_status_t status)
 {
-
+    printf("--- HUB REPLY SEND STATUS: %s ---\n", status == ESP_NOW_SEND_SUCCESS ? "SUCCESS" : "FAIL");
 }
 
 
@@ -171,9 +182,13 @@ void wifi_init(void)
         }
     };
 
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_data));
     ESP_ERROR_CHECK(esp_wifi_start());
+
+    ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
+
+    //esp_wifi_set_max_tx_power(56);
 
     xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
 }
@@ -193,6 +208,13 @@ void esp_now_setup(void)
     esp_wifi_get_channel(&wifi_channel, &second_channel);
     
     printf("--- DEBUG: Tell your Solar Node to use Channel %d ---\n", wifi_channel);
+
+    uint8_t sta_mac[6], ap_mac[6];
+    esp_wifi_get_mac(WIFI_IF_STA, sta_mac);
+    esp_wifi_get_mac(WIFI_IF_AP, ap_mac);
+    
+    printf("--- HUB STA MAC: %02X:%02X:%02X:%02X:%02X:%02X ---\n", sta_mac[0], sta_mac[1], sta_mac[2], sta_mac[3], sta_mac[4], sta_mac[5]);
+    printf("--- HUB AP  MAC: %02X:%02X:%02X:%02X:%02X:%02X ---\n", ap_mac[0], ap_mac[1], ap_mac[2], ap_mac[3], ap_mac[4], ap_mac[5]);
 }
 
 

@@ -67,7 +67,7 @@ void app_main(void)
     
     for(;;)
     {
-        /*int raw = 0;
+        int raw = 0;
         ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, ADC_CHANNEL_3, &raw));
 
         // Blink LED to signal a reading
@@ -75,7 +75,7 @@ void app_main(void)
         
         
 
-        printf("de waarde van adc is: %d\n", raw);*/
+        printf("de waarde van adc is: %d\n", raw);
 
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
